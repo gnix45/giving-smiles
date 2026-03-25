@@ -60,7 +60,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     if (!patientId) return;
     const { error } = await supabase.from('matches').insert({
       id: crypto.randomUUID(),
-      patient_id: patientId, organ_type: organNeeded || 'Kidney', confidence: matchPercentage, status: 'Evaluating',
+      patient_id: patientId, organ_type: organNeeded || 'Kidney', confidence: matchPercentage, status: 'pending',
       urgency: priority === 'Status 1 (Urgent)' ? 'Critical' : priority === 'Status 2 (High)' ? 'High' : 'Standard',
       hla_typing: `HLA-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       distance_miles: Math.floor(Math.random() * 200 + 10),

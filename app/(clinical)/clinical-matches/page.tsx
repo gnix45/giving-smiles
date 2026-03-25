@@ -11,7 +11,7 @@ type Match = {
   profiles?: { full_name: string; email: string } | null;
 };
 
-const statusTabs = ['All', 'Evaluating', 'Approved', 'Rejected'];
+const statusTabs = ['All', 'Pending', 'Approved', 'Rejected'];
 
 export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -46,9 +46,10 @@ export default function MatchesPage() {
   }
 
   async function updateMatchStatus(id: string, newStatus: string, patientId: string) {
-    const { error } = await supabase.from('matches').update({ status: newStatus }).eq('id', id);
+    const dbStatus = newStatus.toLowerCase(); // 'approved' or 'rejected'
+    const { error } = await supabase.from('matches').update({ status: dbStatus }).eq('id', id);
     if (!error) {
-      setMatches(prev => prev.map(m => m.id === id ? { ...m, status: newStatus } : m));
+      setMatches(prev => prev.map(m => m.id === id ? { ...m, status: dbStatus } : m));
       
       // If approved, update waitlist match_percentage and status
       if (newStatus === 'Approved') {
@@ -71,7 +72,7 @@ export default function MatchesPage() {
       patient_id: selectedPatient,
       organ_type: organType,
       confidence: confidence,
-      status: 'Evaluating',
+      status: 'pending',
       urgency: urgency,
       hla_typing: `HLA-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       distance_miles: Math.floor(Math.random() * 200 + 10),
@@ -188,7 +189,7 @@ export default function MatchesPage() {
                 </div>
               </div>
 
-              {match.status === 'Evaluating' && (
+              {match.status === 'pending' && (
                 <div className="flex gap-2 pt-2 border-t border-surface-container">
                   <button onClick={() => updateMatchStatus(match.id, 'Approved', match.patient_id)} className="flex-1 py-2 bg-emerald-600 text-white rounded-full text-xs font-bold hover:opacity-90 flex items-center justify-center gap-1">
                     <CheckCircle className="w-3 h-3" /> Approve
