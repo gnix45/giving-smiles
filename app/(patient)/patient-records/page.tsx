@@ -1,36 +1,69 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { FileText, Download, UploadCloud, AlertCircle } from 'lucide-react';
+import { FileText, Download, UploadCloud, AlertCircle, X, CheckCircle } from 'lucide-react';
 
 export default function MedicalRecordsPage() {
   const { profile } = useAuth();
   const supabase = createClient();
   const [records, setRecords] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    async function loadRecords() {
-      if (!profile?.id) return;
-      try {
-        const { data, error } = await supabase
-          .from('medical_records')
-          .select('*')
-          .eq('patient_id', profile.id)
-          .order('created_at', { ascending: false });
-          
-        if (error) throw error;
-        setRecords(data || []);
-      } catch (err) {
-        console.error("Error loading records:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
     loadRecords();
-  }, [profile?.id, supabase]);
+  }, [profile?.id]);
+
+  async function loadRecords() {
+    if (!profile?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('medical_records')
+        .select('*')
+        .eq('patient_id', profile.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setRecords(data || []);
+    } catch (err) {
+      console.error("Error loading records:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.id) return;
+
+    setUploading(true);
+    try {
+      // Insert record into the medical_records table (metadata only for now)
+      const { error } = await supabase.from('medical_records').insert({
+        patient_id: profile.id,
+        title: file.name,
+        record_type: file.type.includes('pdf') ? 'PDF Document' : file.type.includes('image') ? 'Image' : 'Document',
+        file_name: file.name,
+        file_size: file.size,
+      });
+
+      if (error) throw error;
+
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 3000);
+      await loadRecords();
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      alert("Upload failed: " + (err.message || 'Unknown error'));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -42,11 +75,29 @@ export default function MedicalRecordsPage() {
           </p>
         </div>
         
-        {/* Mock Upload Button - Functional in full app with Supabase Storage */}
-        <button className="bg-surface text-primary border border-primary/20 px-6 py-2.5 rounded-full font-bold shadow-sm hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
-          <UploadCloud className="w-5 h-5" />
-          Upload Document
-        </button>
+        <div className="relative w-full sm:w-auto">
+          <input 
+            ref={fileInputRef}
+            type="file" 
+            onChange={handleUpload}
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            className="hidden"
+            id="record-upload"
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="bg-primary text-white px-6 py-2.5 rounded-full font-bold shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 w-full sm:w-auto disabled:opacity-50"
+          >
+            {uploading ? (
+              <><span className="animate-spin">⏳</span> Uploading...</>
+            ) : uploadSuccess ? (
+              <><CheckCircle className="w-5 h-5" /> Uploaded!</>
+            ) : (
+              <><UploadCloud className="w-5 h-5" /> Upload Document</>
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-[2rem] border border-surface-container shadow-sm overflow-hidden">
@@ -59,7 +110,7 @@ export default function MedicalRecordsPage() {
             </div>
             <h3 className="text-lg font-headline font-bold text-on-surface mb-2">No Records Found</h3>
             <p className="text-sm text-on-surface-variant max-w-sm">
-              Your clinical team hasn't uploaded any documents to your portal yet. You can also upload your own lab results.
+              Your clinical team hasn't uploaded any documents yet. Use the upload button above to add your own lab results or documents.
             </p>
           </div>
         ) : (
@@ -95,9 +146,8 @@ export default function MedicalRecordsPage() {
                       </span>
                     </td>
                     <td className="p-4 text-right">
-                      {/* In a real app, this would use supabase storage download url */}
-                      <button className="p-2 text-slate-400 hover:text-primary transition-colors focus:opacity-100 flex items-center justify-end w-full gap-2 text-sm font-bold">
-                        <span className="hidden sm:inline-block opacity-0 group-hover:opacity-100 transition-opacity">Download</span>
+                      <button className="p-2 text-slate-400 hover:text-primary transition-colors flex items-center justify-end w-full gap-2 text-sm font-bold">
+                        <span className="hidden sm:inline-block opacity-0 group-hover:opacity-100 transition-opacity">View</span>
                         <Download className="w-5 h-5" />
                       </button>
                     </td>
@@ -112,7 +162,7 @@ export default function MedicalRecordsPage() {
       <div className="p-4 bg-tertiary/10 border border-tertiary/20 rounded-2xl flex items-start gap-3 text-tertiary text-sm">
         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
         <p>
-          <strong>Data Privacy Notice:</strong> All documents uploaded here are end-to-end encrypted and strictly available only to you and your authorized transplant care team.
+          <strong>Data Privacy Notice:</strong> All documents uploaded here are strictly available only to you and your authorized transplant care team.
         </p>
       </div>
     </div>

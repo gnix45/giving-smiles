@@ -9,6 +9,8 @@ import {
   Users, 
   FileText, 
   MessageSquare,
+  Calendar,
+  HeartHandshake,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -27,9 +29,11 @@ export function PatientSidebar({ isOpen, setIsOpen }: PatientSidebarProps) {
   const links = [
     { href: '/patient-dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/patient-medical-info', icon: Heart, label: 'Medical Profile' },
+    { href: '/patient-appointments', icon: Calendar, label: 'Appointments' },
     { href: '/patient-care-team', icon: Users, label: 'Care Team' },
     { href: '/patient-records', icon: FileText, label: 'Medical Records' },
     { href: '/patient-messages', icon: MessageSquare, label: 'Secure Messages' },
+    { href: '/community', icon: HeartHandshake, label: 'Support & Community' },
   ];
 
   return (

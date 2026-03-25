@@ -5,7 +5,7 @@ import {
   Users, 
   Search, 
   Filter,
-  MoreVertical,
+  Eye,
   Activity,
   Heart
 } from 'lucide-react';
@@ -137,9 +137,9 @@ export default function PatientsList() {
                       </div>
                     </td>
                     <td className="p-4 text-right">
-                      <button className="p-2 text-slate-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
+                      <Link href={`/clinical-patients/${patient.profile_id}`} className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1 justify-center">
+                        <Eye className="w-3 h-3" /> View Details
+                      </Link>
                     </td>
                   </tr>
                 ))
