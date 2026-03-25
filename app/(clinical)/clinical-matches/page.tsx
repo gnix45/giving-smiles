@@ -74,6 +74,7 @@ export default function MatchesPage() {
       status: 'Evaluating',
       urgency: urgency,
       hla_typing: `HLA-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+      distance_miles: Math.floor(Math.random() * 200 + 10),
     });
 
     if (!error) {

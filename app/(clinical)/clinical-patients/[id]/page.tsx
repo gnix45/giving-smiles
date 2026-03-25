@@ -63,6 +63,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       patient_id: patientId, organ_type: organNeeded || 'Kidney', confidence: matchPercentage, status: 'Evaluating',
       urgency: priority === 'Status 1 (Urgent)' ? 'Critical' : priority === 'Status 2 (High)' ? 'High' : 'Standard',
       hla_typing: `HLA-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+      distance_miles: Math.floor(Math.random() * 200 + 10),
     });
     if (!error) alert('Match request created! Go to Matches page to view.'); else alert('Error: ' + error.message);
   }
