@@ -67,13 +67,13 @@ export default function MatchesPage() {
     setCreating(true);
 
     const { error } = await supabase.from('matches').insert({
+      id: crypto.randomUUID(),
       patient_id: selectedPatient,
       organ_type: organType,
       confidence: confidence,
       status: 'Evaluating',
       urgency: urgency,
       hla_typing: `HLA-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-      distance: `${Math.floor(Math.random() * 200 + 10)} mi`,
     });
 
     if (!error) {
