@@ -15,6 +15,7 @@ function NewPatientForm() {
   const [apptData, setApptData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<{email: string; password: string} | null>(null);
   
   // Doctor overrides for generating the account
   const [password, setPassword] = useState('');
@@ -50,7 +51,6 @@ function NewPatientForm() {
     setError(null);
     
     try {
-      // 1. We must use the Admin API (service role) to create users directly without email confirmation
       const res = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,8 +59,6 @@ function NewPatientForm() {
           password: password,
           fullName: `${apptData.first_name} ${apptData.last_name}`,
           role: 'patient',
-          
-          // Extended data to populate `patients` and `waitlist` tables
           appointmentId: apptData.id,
           organNeeded: apptData.organ_needed,
           bloodType: apptData.blood_type,
@@ -79,14 +77,75 @@ function NewPatientForm() {
         throw new Error(errData.error || 'Failed to create patient account');
       }
 
-      router.push('/clinical-patients?success=true');
-      router.refresh();
+      // Show credentials to the doctor instead of redirecting
+      setCreatedCredentials({
+        email: apptData.email,
+        password: password
+      });
       
     } catch (err: any) {
       setError(err.message);
       setIsLoading(false);
     }
   };
+
+  // SUCCESS: Show credentials screen
+  if (createdCredentials) {
+    return (
+      <div className="max-w-xl mx-auto space-y-6 animate-in fade-in duration-500">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-[2rem] p-8 text-center space-y-4">
+          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-headline font-bold text-emerald-800">Account Created Successfully!</h1>
+          <p className="text-sm text-emerald-700">Share these login credentials with the patient securely.</p>
+        </div>
+
+        <div className="bg-white rounded-[2rem] border border-surface-container p-6 shadow-sm space-y-4">
+          <h2 className="font-bold text-on-surface">Patient Login Credentials</h2>
+          
+          <div className="space-y-3">
+            <div className="bg-surface-container-low rounded-xl p-4">
+              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Portal URL</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-mono font-bold text-primary">{typeof window !== 'undefined' ? window.location.origin : ''}/login</p>
+                <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/login`)} className="text-xs font-bold text-on-surface-variant hover:text-primary">Copy</button>
+              </div>
+            </div>
+            
+            <div className="bg-surface-container-low rounded-xl p-4">
+              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Email</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-mono font-bold text-on-surface">{createdCredentials.email}</p>
+                <button onClick={() => navigator.clipboard.writeText(createdCredentials.email)} className="text-xs font-bold text-on-surface-variant hover:text-primary">Copy</button>
+              </div>
+            </div>
+
+            <div className="bg-surface-container-low rounded-xl p-4">
+              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Temporary Password</p>
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-mono font-black text-primary">{createdCredentials.password}</p>
+                <button onClick={() => navigator.clipboard.writeText(createdCredentials.password)} className="text-xs font-bold text-on-surface-variant hover:text-primary">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 font-bold">
+            ⚠️ This password is shown only once. Make sure to copy and share it with the patient securely.
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Link href="/clinical-patients" className="flex-1 py-3 bg-primary text-white rounded-full font-bold text-center hover:opacity-90 transition-opacity">
+            Go to Patient List
+          </Link>
+          <Link href="/clinical-dashboard" className="flex-1 py-3 bg-surface-container-low text-on-surface rounded-full font-bold text-center hover:bg-surface-container transition-colors">
+            Back to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!apptData && appointmentId) {
     return <div className="p-8 text-center font-bold text-on-surface-variant">Loading appointment data...</div>;

@@ -131,7 +131,7 @@ export default function ClinicalDashboard() {
                 <h2 className="text-xl font-headline font-bold text-on-surface">Evaluation Requests</h2>
                 <p className="text-sm text-on-surface-variant mt-1">New patient submissions requiring review and account creation.</p>
               </div>
-              <Link href="/clinical/appointments" className="hidden sm:flex items-center gap-2 text-primary font-bold hover:bg-primary/5 px-4 py-2 rounded-full transition-colors">
+              <Link href="/clinical-appointments" className="hidden sm:flex items-center gap-2 text-primary font-bold hover:bg-primary/5 px-4 py-2 rounded-full transition-colors">
                 View All <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -163,7 +163,7 @@ export default function ClinicalDashboard() {
                     </div>
                     
                     <Link 
-                      href={`/clinical/patients/new?appointment=${appt.id}`}
+                      href={`/clinical-patients/new?appointment=${appt.id}`}
                       className="w-full sm:w-auto px-6 py-2.5 bg-surface text-primary border border-surface-container rounded-full font-bold shadow-sm hover:border-primary transition-colors text-center shrink-0"
                     >
                       Review & Create Account
@@ -174,7 +174,7 @@ export default function ClinicalDashboard() {
             </div>
             {recentAppointments.length > 0 && (
                <div className="p-4 bg-surface-container-low sm:hidden border-t border-surface-container">
-                  <Link href="/clinical/appointments" className="flex items-center justify-center gap-2 text-primary font-bold">
+                  <Link href="/clinical-appointments" className="flex items-center justify-center gap-2 text-primary font-bold">
                     View All Requests <ArrowRight className="w-4 h-4" />
                   </Link>
                </div>

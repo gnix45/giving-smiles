@@ -90,7 +90,7 @@ export function ClinicalSidebar({ isOpen, setIsOpen }: ClinicalSidebarProps) {
 
         <div className="pt-4 mt-4 border-t border-surface-container space-y-4 shrink-0">
           <Link 
-            href="/clinical/match-request"
+            href="/clinical-matches"
             className="w-full bg-primary text-white rounded-full py-3 px-4 font-bold text-sm flex items-center justify-center space-x-2 active:scale-95 transition-all shadow-lg shadow-primary/10 hover:opacity-90"
           >
             <Plus className="w-4 h-4" />

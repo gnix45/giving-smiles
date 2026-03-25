@@ -55,7 +55,7 @@ export default function PatientsList() {
           <p className="text-sm text-on-surface-variant mt-1">Manage active patients and medical profiles.</p>
         </div>
         <Link 
-          href="/clinical/patients/new" 
+          href="/clinical-patients/new" 
           className="bg-primary text-white px-6 py-2.5 rounded-full font-bold shadow-sm hover:opacity-90 transition-opacity"
         >
           Add Patient
