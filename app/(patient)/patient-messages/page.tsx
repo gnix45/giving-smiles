@@ -47,7 +47,7 @@ export default function PatientMessages() {
       }
     }
     loadDoctors();
-  }, [supabase]);
+  }, []);
 
   // 2. Load messages when a doctor is selected
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function PatientMessages() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedUser?.id, profile?.id, supabase]);
+  }, [selectedUser?.id, profile?.id]);
 
   const scrollToBottom = () => {
     setTimeout(() => {

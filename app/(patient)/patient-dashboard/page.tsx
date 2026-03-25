@@ -74,7 +74,7 @@ export default function PatientDashboard() {
     }
 
     loadDashboard();
-  }, [profile?.id, supabase]);
+  }, [profile?.id]);
 
   if (isLoading) {
     return <div className="p-8 text-center text-on-surface-variant font-bold">Loading dashboard...</div>;
@@ -194,7 +194,7 @@ export default function PatientDashboard() {
             )}
           </div>
           
-          <Link href="/patient/appointments" className="mt-8 w-full py-4 bg-surface text-primary border border-surface-container rounded-full font-bold text-sm hover:bg-surface-container-low transition-colors flex items-center justify-center">
+          <Link href="/patient-appointments" className="mt-8 w-full py-4 bg-surface text-primary border border-surface-container rounded-full font-bold text-sm hover:bg-surface-container-low transition-colors flex items-center justify-center">
             View All Appointments
           </Link>
         </motion.div>
@@ -230,7 +230,7 @@ export default function PatientDashboard() {
                   </div>
                 </div>
                 <div className="flex w-full sm:w-auto space-x-2">
-                  <Link href="/patient/messages" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary/20 transition-colors">
+                  <Link href="/patient-messages" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary/20 transition-colors">
                     <MessageCircle className="w-4 h-4" /> Message
                   </Link>
                   <button className="flex-1 sm:flex-none flex items-center justify-center p-2 border border-surface-container hover:bg-surface-container-highest rounded-xl text-on-surface-variant transition-colors">

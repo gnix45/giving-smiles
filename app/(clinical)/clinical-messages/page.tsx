@@ -47,7 +47,7 @@ export default function ClinicalMessages() {
       }
     }
     loadPatients();
-  }, [supabase]);
+  }, []);
 
   // 2. Load messages when a user is selected
   useEffect(() => {
@@ -94,7 +94,7 @@ export default function ClinicalMessages() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedUser?.id, profile?.id, supabase]);
+  }, [selectedUser?.id, profile?.id]);
 
   const scrollToBottom = () => {
     setTimeout(() => {

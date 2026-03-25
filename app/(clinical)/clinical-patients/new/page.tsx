@@ -41,7 +41,7 @@ function NewPatientForm() {
       if (error) console.error("Error loading appointment:", error);
     }
     loadAppointment();
-  }, [appointmentId, supabase]);
+  }, [appointmentId]);
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();

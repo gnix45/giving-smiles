@@ -33,7 +33,7 @@ export default function PatientAppointments() {
       }
     }
     loadAppointments();
-  }, [profile?.id, supabase]);
+  }, [profile?.id]);
 
   const getStatusBadge = (status: string) => {
     switch(status) {

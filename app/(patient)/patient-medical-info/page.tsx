@@ -47,7 +47,7 @@ export default function MedicalInfoPage() {
       }
     }
     loadData();
-  }, [profile?.id, supabase]);
+  }, [profile?.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

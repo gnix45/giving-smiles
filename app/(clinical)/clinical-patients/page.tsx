@@ -40,7 +40,7 @@ export default function PatientsList() {
       }
     }
     loadPatients();
-  }, [supabase]);
+  }, []);
 
   const filteredPatients = patients.filter(p => 
     p.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

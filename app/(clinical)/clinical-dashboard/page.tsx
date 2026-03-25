@@ -70,7 +70,7 @@ export default function ClinicalDashboard() {
     }
 
     loadDashboardData();
-  }, [supabase]);
+  }, []);
 
   if (isLoading) {
     return <div className="p-8 text-center text-on-surface-variant font-bold">Loading clinical intelligence...</div>;

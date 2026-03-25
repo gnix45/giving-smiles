@@ -32,7 +32,7 @@ export default function CareTeamPage() {
       }
     }
     loadTeam();
-  }, [supabase]);
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
