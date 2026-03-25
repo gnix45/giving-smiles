@@ -16,8 +16,17 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: 'Giving Smiles Everyday',
+  title: {
+    default: 'Giving Smiles Everyday — Organ Transplant Platform',
+    template: '%s | Giving Smiles Everyday',
+  },
   description: 'A comprehensive organ donation and transplant logistics platform bridging the gap between clinical precision and human compassion.',
+  keywords: ['organ donation', 'transplant', 'hospital', 'patient portal', 'medical', 'healthcare'],
+  openGraph: {
+    title: 'Giving Smiles Everyday',
+    description: 'Bridging clinical precision and human compassion in organ transplant logistics.',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

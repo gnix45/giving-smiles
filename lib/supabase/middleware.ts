@@ -38,7 +38,8 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute = request.nextUrl.pathname === '/' || 
                         request.nextUrl.pathname === '/login' || 
                         request.nextUrl.pathname === '/clinical-login' ||
-                        request.nextUrl.pathname === '/book-appointment'
+                        request.nextUrl.pathname === '/book-appointment' ||
+                        request.nextUrl.pathname.startsWith('/api/')
 
   if (
     !user &&
