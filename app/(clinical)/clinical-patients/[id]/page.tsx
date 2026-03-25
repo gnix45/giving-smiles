@@ -76,7 +76,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       patient_id: patientId, assigned_doctor_id: profile.id, status: 'confirmed',
       appointment_date: new Date(date).toISOString(),
       first_name: patient?.profiles?.full_name?.split(' ')[0] || '', last_name: patient?.profiles?.full_name?.split(' ').slice(1).join(' ') || '',
-      email: patient?.profiles?.email || '', organ_needed: organNeeded, blood_type: bloodType,
+      email: patient?.profiles?.email || '', phone: 'N/A', organ_needed: organNeeded, blood_type: bloodType,
     });
     if (!error) { await loadPatientData(); alert('Appointment scheduled!'); } else alert('Error: ' + error.message);
   }
