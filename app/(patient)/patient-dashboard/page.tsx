@@ -14,7 +14,9 @@ import {
   BookOpen,
   Users,
   MessageCircle,
-  Activity
+  Activity,
+  Receipt,
+  CheckCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +30,7 @@ export default function PatientDashboard() {
   const [waitlistData, setWaitlistData] = useState<any>(null);
   const [careTeam, setCareTeam] = useState<any[]>([]);
   const [nextAppt, setNextAppt] = useState<any>(null);
+  const [bills, setBills] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -66,6 +69,16 @@ export default function PatientDashboard() {
 
         if (doctors) setCareTeam(doctors);
 
+        // Fetch display billing requests
+        const { data: fetchBills, error: billErr } = await supabase
+          .from('billing_requests')
+          .select('*')
+          .eq('patient_id', profile.id)
+          .order('created_at', { ascending: false });
+
+        if (fetchBills) setBills(fetchBills);
+        if (billErr) console.log("Billing requests not loaded (table may not exist yet):", billErr);
+
       } catch (error) {
         console.error("Error loading patient dashboard:", error);
       } finally {
@@ -75,6 +88,16 @@ export default function PatientDashboard() {
 
     loadDashboard();
   }, [profile?.id]);
+
+  async function markBillPaid(billId: string) {
+    const { error } = await supabase.from('billing_requests').update({ status: 'review_pending' }).eq('id', billId);
+    if (!error) {
+      setBills(bills.map(b => b.id === billId ? { ...b, status: 'review_pending' } : b));
+      alert("Bill marked as paid. A doctor will verify this shortly.");
+    } else {
+      alert("Error updating bill: " + error.message);
+    }
+  }
 
   if (isLoading) {
     return <div className="p-8 text-center text-on-surface-variant font-bold">Loading dashboard...</div>;
@@ -262,6 +285,77 @@ export default function PatientDashboard() {
             </div>
           </motion.div>
         </div>
+        {/* Billing Requests */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="col-span-12 lg:col-span-8 bg-white rounded-[2rem] md:rounded-3xl shadow-sm border border-surface-container overflow-hidden"
+        >
+          <div className="p-6 md:p-8 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest">
+            <div>
+              <h3 className="font-bold text-lg font-headline text-on-surface flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-primary" /> Billing & Payments
+              </h3>
+              <p className="text-sm text-on-surface-variant mt-1">Manage your medical bills and outstanding balances.</p>
+            </div>
+          </div>
+          <div className="p-6 md:p-8 space-y-4">
+            {bills.length === 0 ? (
+              <p className="text-sm text-on-surface-variant font-bold text-center py-4">No pending bills at this time.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {bills.map(bill => (
+                  <div key={bill.id} className="p-5 border border-surface-container rounded-2xl bg-surface-container-lowest flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <span className="text-2xl font-black text-on-surface">${Number(bill.amount).toFixed(2)}</span>
+                        {bill.status === 'pending' ? (
+                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-[10px] font-bold uppercase tracking-widest">Action Required</span>
+                        ) : bill.status === 'review_pending' ? (
+                          <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-widest">Verifying</span>
+                        ) : (
+                          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-widest">Paid</span>
+                        )}
+                      </div>
+                      
+                      {bill.status === 'pending' && (
+                        <div className="space-y-3 mb-4">
+                          {bill.payment_link && (
+                            <a href={bill.payment_link} target="_blank" rel="noreferrer" className="block w-full py-2.5 bg-primary/10 text-primary rounded-xl text-center text-sm font-bold hover:bg-primary/20 transition-colors">
+                              Open Payment Link
+                            </a>
+                          )}
+                          {bill.bank_details && (
+                            <div className="p-3 bg-surface-container-low rounded-xl">
+                              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Bank Details</p>
+                              <p className="text-sm text-on-surface font-mono whitespace-pre-wrap">{bill.bank_details}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {bill.status === 'pending' && (
+                      <button onClick={() => markBillPaid(bill.id)} className="w-full py-3 bg-primary text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 mt-2">
+                        <CheckCircle className="w-4 h-4" /> Mark as Paid
+                      </button>
+                    )}
+                    {bill.status === 'review_pending' && (
+                      <p className="text-xs text-amber-700 font-bold bg-amber-50 p-2 rounded-lg text-center mt-2 flex items-center justify-center">Pending confirmation from doctor.</p>
+                    )}
+                    {bill.status === 'paid' && (
+                      <p className="text-xs text-emerald-700 font-bold bg-emerald-50 p-2 rounded-lg text-center mt-2 flex items-center justify-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Payment Complete
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Heart, Activity, Calendar, MessageSquare, Save, CheckCircle, AlertTriangle, Dna } from 'lucide-react';
+import { ArrowLeft, Heart, Activity, Calendar, MessageSquare, Save, CheckCircle, AlertTriangle, Dna, Receipt, X } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +14,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Billing requests
+  const [showBillModal, setShowBillModal] = useState(false);
+  const [billAmount, setBillAmount] = useState('');
+  const [bankDetails, setBankDetails] = useState('');
+  const [paymentLink, setPaymentLink] = useState('');
+  const [creatingBill, setCreatingBill] = useState(false);
+  const [bills, setBills] = useState<any[]>([]);
 
   const [status, setStatus] = useState('');
   const [organNeeded, setOrganNeeded] = useState('');
@@ -40,6 +48,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
       const { data: ap } = await supabase.from('appointments').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }).limit(5);
       setAppointments(ap || []);
+
+      const { data: fetchBills, error: billErr } = await supabase.from('billing_requests').select('*').eq('patient_id', patientId).order('created_at', { ascending: false });
+      if (fetchBills) setBills(fetchBills);
+      if (billErr) console.log("Billing requests not loaded (table may not exist yet):", billErr);
+
     } catch (err) { console.error('Error:', err); } finally { setIsLoading(false); }
   }
 
@@ -79,6 +92,46 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       email: patient?.profiles?.email || '', phone: 'N/A', organ_needed: organNeeded, blood_type: bloodType,
     });
     if (!error) { await loadPatientData(); alert('Appointment scheduled!'); } else alert('Error: ' + error.message);
+  }
+
+  async function handleCreateBill(e: React.FormEvent) {
+    e.preventDefault();
+    if (!profile?.id || !patientId) return;
+    if (!bankDetails && !paymentLink) {
+      alert("Please provide either bank details or a payment link.");
+      return;
+    }
+    
+    setCreatingBill(true);
+    const { error } = await supabase.from('billing_requests').insert({
+      patient_id: patientId,
+      doctor_id: profile.id,
+      amount: parseFloat(billAmount),
+      bank_details: bankDetails || null,
+      payment_link: paymentLink || null,
+      status: 'pending'
+    });
+    
+    setCreatingBill(false);
+    if (!error) {
+      setShowBillModal(false);
+      setBillAmount('');
+      setBankDetails('');
+      setPaymentLink('');
+      await loadPatientData();
+      alert("Bill requested successfully.");
+    } else {
+      alert("Error creating bill: " + error.message);
+    }
+  }
+
+  async function markBillPaid(billId: string) {
+    const { error } = await supabase.from('billing_requests').update({ status: 'paid' }).eq('id', billId);
+    if (!error) {
+      await loadPatientData();
+    } else {
+      alert("Error updating bill: " + error.message);
+    }
   }
 
   if (isLoading) return <div className="p-12 text-center text-on-surface-variant font-bold">Loading patient profile...</div>;
@@ -186,6 +239,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             <button onClick={createMatchRequest} className="w-full py-3 bg-white text-primary rounded-xl font-bold hover:bg-white/90 transition-colors flex items-center justify-center gap-2">
               <Dna className="w-4 h-4" /> Create Match Request
             </button>
+            <button onClick={() => setShowBillModal(true)} className="w-full py-3 bg-white text-primary rounded-xl font-bold hover:bg-white/90 transition-colors flex items-center justify-center gap-2">
+              <Receipt className="w-4 h-4" /> Request Bill
+            </button>
             <Link href="/clinical-messages" className="w-full py-3 bg-white/20 text-white rounded-xl font-bold hover:bg-white/30 transition-colors flex items-center justify-center gap-2">
               <MessageSquare className="w-4 h-4" /> Send Message
             </Link>
@@ -208,6 +264,31 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             )}
           </div>
 
+          <div className="bg-white rounded-2xl border border-surface-container p-6 shadow-sm space-y-4">
+            <h3 className="font-bold text-on-surface flex items-center gap-2"><Receipt className="w-4 h-4 text-primary" /> Billing Requests</h3>
+            {bills.length === 0 ? <p className="text-sm text-on-surface-variant">No billing requests yet.</p> : (
+              <div className="space-y-3">
+                {bills.map(b => (
+                  <div key={b.id} className="p-3 bg-surface-container-lowest border border-surface-container rounded-xl">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-bold text-on-surface">${Number(b.amount).toFixed(2)}</p>
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${b.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : b.status === 'review_pending' ? 'bg-amber-100 text-amber-700' : 'bg-surface-container text-on-surface-variant'}`}>
+                        {b.status.replace('_', ' ').toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-on-surface-variant mb-2">{new Date(b.created_at).toLocaleDateString()}</p>
+                    
+                    {b.status === 'review_pending' && (
+                      <button onClick={() => markBillPaid(b.id)} className="w-full py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center justify-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Verify Payment (Mark Paid)
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {patient.allergies && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
@@ -219,6 +300,59 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           )}
         </div>
       </div>
+
+      {/* Request Bill Modal */}
+      {showBillModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-surface-container">
+              <h2 className="font-bold text-xl text-on-surface flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-primary" /> Request Bill
+              </h2>
+              <button onClick={() => setShowBillModal(false)} className="p-2 hover:bg-surface-container rounded-full transition-colors">
+                <X className="w-5 h-5 text-on-surface-variant" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateBill} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Amount ($) *</label>
+                <input type="number" step="0.01" value={billAmount} onChange={e => setBillAmount(e.target.value)} required 
+                  className="w-full px-4 py-3 bg-surface-container-low rounded-xl border-none text-sm font-bold focus:ring-2 focus:ring-primary/20" 
+                  placeholder="e.g. 150.00" />
+              </div>
+              
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-xs font-bold">
+                Please provide AT LEAST ONE of the following (Bank Details or Payment Link).
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Bank Details</label>
+                <textarea value={bankDetails} onChange={e => setBankDetails(e.target.value)} rows={3}
+                  className="w-full px-4 py-3 bg-surface-container-low rounded-xl border-none text-sm focus:ring-2 focus:ring-primary/20"
+                  placeholder="Account Number, Routing, etc..." />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Payment Link (URL)</label>
+                <input type="url" value={paymentLink} onChange={e => setPaymentLink(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface-container-low rounded-xl border-none text-sm focus:ring-2 focus:ring-primary/20"
+                  placeholder="https://..." />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => setShowBillModal(false)} className="flex-1 py-3 text-on-surface font-bold hover:bg-surface-container rounded-xl transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" disabled={creatingBill} className="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
+                  <Receipt className="w-4 h-4" /> {creatingBill ? "Sending..." : "Send Request"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
